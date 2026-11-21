@@ -6,6 +6,7 @@
 #pragma once
 
 #include "rl/gridworld.hpp"
+#include <algorithm>
 #include <random>
 #include <string>
 #include <vector>
@@ -51,6 +52,23 @@ public:
      * @return The greedy GridAction.
      */
     [[nodiscard]] GridAction greedy_action(int state) const;
+
+    /**
+     * @brief Returns the current exploration rate (epsilon).
+     * @return Current epsilon value in [0, 1].
+     */
+    [[nodiscard]] double epsilon() const noexcept { return epsilon_; }
+
+    /**
+     * @brief Decays the exploration rate epsilon by a multiplicative factor down to min_epsilon.
+     *        Essential for on-policy SARSA to converge to the optimal policy (GLIE condition)!
+     *
+     * @param decay_factor Multiplicative decay per episode (e.g., 0.995).
+     * @param min_epsilon Minimum floor for epsilon (e.g., 0.02).
+     */
+    void decay_epsilon(double decay_factor = 0.995, double min_epsilon = 0.02) noexcept {
+        epsilon_ = std::max(min_epsilon, epsilon_ * decay_factor);
+    }
 
     /**
      * @brief Reads the Q-value for a (state, action) pair.

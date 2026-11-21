@@ -157,6 +157,7 @@ void RecordMetrics(const rl::GridWorld& env, const AgentType& agent, EpisodeTrac
 void StepLiveQLearning() {
     if (g_track_q.terminated || g_track_q.truncated) {
         RecordMetrics(g_env_q, g_q_agent, g_track_q);
+        g_q_agent.decay_epsilon(0.995, 0.02);
         ResetSingleEpisode(g_env_q, g_track_q, false);
         return;
     }
@@ -179,6 +180,7 @@ void StepLiveQLearning() {
 void StepLiveSarsa() {
     if (g_track_s.terminated || g_track_s.truncated) {
         RecordMetrics(g_env_s, g_s_agent, g_track_s);
+        g_s_agent.decay_epsilon(0.995, 0.02);
         ResetSingleEpisode(g_env_s, g_track_s, true);
         return;
     }
@@ -209,6 +211,7 @@ void TrainBothBatch(int num_episodes) {
             StepLiveQLearning();
         }
         RecordMetrics(g_env_q, g_q_agent, g_track_q);
+        g_q_agent.decay_epsilon(0.995, 0.02);
 
         // 2. SARSA episode
         ResetSingleEpisode(g_env_s, g_track_s, true);
@@ -216,6 +219,7 @@ void TrainBothBatch(int num_episodes) {
             StepLiveSarsa();
         }
         RecordMetrics(g_env_s, g_s_agent, g_track_s);
+        g_s_agent.decay_epsilon(0.995, 0.02);
     }
     ResetBothEpisodes();
 }
@@ -257,7 +261,8 @@ void DrawGridPanel(HDC hdc, const RECT& panel_rc, const rl::GridWorld& env,
     std::wstringstream hdr;
     hdr << std::fixed << std::setprecision(1)
         << title << L"   |   Ep: " << tr.episodes_done
-        << L"   |   Step: " << env.current_steps()
+        << L"   |   eps: " << std::setprecision(2) << agent.epsilon()
+        << std::setprecision(1)
         << L"   |   Return: " << tr.total_return;
     RECT hdr_rc{panel_rc.left + 10, panel_rc.top + 6, panel_rc.right - 10, panel_rc.top + 28};
     SetTextColor(hdc, accent_color);
