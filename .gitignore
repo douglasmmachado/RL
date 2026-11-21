@@ -1,0 +1,14 @@
+# Build artifacts & compiled executables
+build/
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+*.pdb
+*.ilk
+
+# IDE / local editor settings
+.vscode/
+.idea/
+*.user
