@@ -15,6 +15,7 @@ endif()
 # Shared core RL library (GridWorld + TabularAgent + QLearningAgent + SarsaAgent)
 add_library(rl_core STATIC
     src/gridworld.cpp
+    src/cartpole.cpp
     src/tabular_agent.cpp
     src/q_learning_agent.cpp
     src/sarsa_agent.cpp
@@ -50,6 +51,27 @@ if(WIN32)
     target_link_libraries(visualize_gridworld PRIVATE gdi32 user32)
 endif()
 
+# 3. Animated CartPole Discretized Q-Learning GUI Arena (Windows GDI)
+add_executable(visualize_cartpole
+    src/visualize_cartpole.cpp
+)
+target_link_libraries(visualize_cartpole PRIVATE rl_core)
+if(WIN32)
+    target_link_libraries(visualize_cartpole PRIVATE gdi32 user32)
+endif()
+
+# 4. RLtools 3-Way Continuous CartPole Arena: SAC vs. PPO vs. TD3
+add_executable(visualize_cartpole_rltools
+    src/visualize_cartpole_rltools.cpp
+)
+target_include_directories(visualize_cartpole_rltools PRIVATE
+    include
+    external/rl-tools/include
+)
+if(WIN32)
+    target_link_libraries(visualize_cartpole_rltools PRIVATE gdi32 user32)
+endif()
+
 # 3. Unit Testing with CTest
 enable_testing()
 
@@ -64,3 +86,7 @@ add_test(NAME QLearningTests COMMAND test_q_learning)
 add_executable(test_sarsa tests/test_sarsa.cpp)
 target_link_libraries(test_sarsa PRIVATE rl_core)
 add_test(NAME SarsaTests COMMAND test_sarsa)
+
+add_executable(test_cartpole tests/test_cartpole.cpp)
+target_link_libraries(test_cartpole PRIVATE rl_core)
+add_test(NAME CartPoleTests COMMAND test_cartpole)
