@@ -1,102 +1,98 @@
-# C++ Reinforcement Learning Sandbox
+# C++ Reinforcement Learning Studio
 
-A clean, hands-on **C++20 Reinforcement Learning** repository built from scratch to explore modern C++ software design (templates, inheritance, `<random>`, CMake/CTest, native Win32 GDI visualization) alongside foundational and continuous-control RL algorithms.
+A complete, native **C++20 Reinforcement Learning & Control Studio** built with **Dear ImGui**, **ImPlot**, **DirectX 11**, and **RLtools** — combining from-scratch tabular RL, model-based Dynamic Programming, and compile-time optimized Deep RL (**SAC**, **PPO**, **TD3**) across **13 interactive environments**.
 
-## Features
-- **Generic RL Interface (`Environment<StateType, ActionType>`)**: Compile-time parameterized base interface mirroring Gymnasium's `reset()`, `step()`, and `StepResult`.
-- **Procedural 2D GridWorld (`GridWorld`)**:
-  - Configurable dimensions, impassable walls, multiple traps, and Goal states.
-  - Built-in **Breadth-First Search (BFS)** solvability verifier so every randomly generated map is guaranteed solvable.
-  - Classic **8x4 Cliff-Walking** layout preset for contrasting off-policy vs. on-policy learning.
-- **Modular Tabular RL Agents (`TabularAgent` Hierarchy)**:
-  - `TabularAgent`: Base class managing a cache-friendly flattened 1D Q-table (`std::vector<double>`) and `<random>` $\epsilon$-greedy exploration.
-  - `QLearningAgent`: Off-policy Bellman optimality update returning per-step TD error.
-  - `SarsaAgent`: On-policy State-Action-Reward-State-Action update returning per-step TD error.
-- **Parallel Q-Learning vs. SARSA GUI Arena (`visualize_gridworld`)**:
-  - Zero-dependency native Windows GDI dashboard displaying both agents learning side by side on identical maps.
-  - Real-time Q-value heatmaps, greedy policy arrows (`↑ → ↓ ←`), and **3 dual-curve live plots** (Smoothed Episode Return, Mean TD Error / Bellman Loss, and Mean Max Q-Value).
-- **Continuous Control with `RLtools` (`rl_main`)**:
-  - Header-only `RLtools` submodule integrated with a custom C++ continuous 1D environment trained via Soft Actor-Critic (SAC).
-- **Unit Testing & Doxygen Documentation**:
-  - Automated C++ unit tests registered with CMake `CTest` (`test_gridworld`, `test_q_learning`, `test_sarsa`).
-  - Full Doxygen comments across all headers and source files (enforced by `AGENTS.md`).
+## Highlights
+
+### 1. Interactive C++ RL Studio (`build/rl_studio.exe`)
+- **13 Environments in One Native 60 FPS App:**
+  1. **Multi-Armed Bandits** — 10-armed Gaussian testbed comparing **$\epsilon$-Greedy**, **UCB1**, and **Thompson Sampling** (True Mean vs. Q-Estimates, Cumulative Regret, % Optimal Pulls).
+  2. **GridWorld Lab** — **Q-Learning vs. SARSA** Robots with flickering Fire Traps, **Cliff-Walking**, **Windy GridWorld (10x7)**, **FrozenLake Ice Slip** slider, **Click-to-Paint Map Editor**, **Hover 4-Action Q-Value Inspector**, and **Exact Model-Based Value Iteration (DP)**!
+  3. **Taxi-v3** — 500-state hierarchical pickup/dropoff grid with colored landmarks (`R, G, Y, B`), walls, and animated Q-Learning vs. SARSA taxis.
+  4. **CartPole-Continuous** (`SAC / PPO / TD3` + Center/Angle/Effort Reward Shaping).
+  5. **Pendulum-v1 Swing-Up** (`RLtools` Built-in).
+  6. **Acrobot 2-Link Swing-Up** (`RLtools` Built-in + Anti-Spin Velocity Penalty toggle).
+  7. **MountainCar-Continuous** (Dense vs. Sparse Reward Shaping toggle).
+  8. **Drone2D Planar Quadrotor Hover** (6D state, dual-rotor thrust + Tilt/Vel/Effort sliders).
+  9. **ContinuousGrid2D Trap Arena** (Random multi-trap maps + Dense vs. Sparse toggle).
+  10. **LunarLander / Moon Landing** (6D lunar descent, main rocket + RCS thrusters, soft touchdown vs. crash, Fuel Penalty slider).
+  11. **Reacher-2DOF Robotic Arm** (8D observation, 2-joint continuous inverse kinematics).
+  12. **Ball-and-Beam** (Classic control engineering rolling ball balance).
+  13. **Inverted Double CartPole** (Balance two stacked poles simultaneously!).
+
+- **Educational & Diagnostic Tools:**
+  - **Live Hyperparameter Lab**: Real-time Adam learning rate (`alpha`), discount (`gamma`), $\epsilon$-decay, slip probability, and per-environment **Reward Shaping Lab** with `(?)` tooltips.
+  - **Train-Until-Threshold Benchmark**: Race all algorithms to a target return and compare exact **Rounds**, **Env Steps (Sample Efficiency)**, and **Wall-Clock Time (ms)** in the Benchmark Table.
+  - **Zoomable `ImPlot` Analytics**: Toggle X-axis between *Training Rounds*, *Env Steps*, and *Wall-Clock Seconds*, overlay **Snapshot Curves** across runs, inspect **Phase Space Portraits**, and view 25×25 **Neural Policy Heatmaps** (`RdBu`).
+  - **Rollout Scrubber**: Play/Pause, Loop, speed control (`0.2x`–`2.5x`), and frame-by-frame inspection.
 
 ## Repository Structure
 
 ```text
-├── CMakeLists.txt                  # CMake build system (rl_core static library, apps, CTest)
-├── AGENTS.md                       # Coding conventions (Doxygen default & tutor workflow)
-├── .gitignore                      # Ignores build artifacts, binaries, and local IDE config
+├── CMakeLists.txt                       # CMake build system (rl_core, imgui_implot, rl_studio, CTest)
+├── AGENTS.md                            # Coding conventions (Doxygen default)
 ├── include/rl/
-│   ├── environment.hpp             # Environment<StateType, ActionType> & StepResult<StateType>
-│   ├── gridworld.hpp               # 2D GridWorld (Walls, Traps, Cliff Walking, BFS generator)
-│   ├── tabular_agent.hpp           # TabularAgent base class (1D Q-table, epsilon-greedy)
-│   ├── q_learning_agent.hpp        # QLearningAgent : public TabularAgent
-│   ├── sarsa_agent.hpp             # SarsaAgent : public TabularAgent
-│   └── custom_env.hpp              # RLtools-compatible continuous 1D environment
+│   ├── environment.hpp                  # Generic Environment<StateType, ActionType> & StepResult
+│   ├── gridworld.hpp                    # 2D GridWorld (Walls, Traps, Cliff, Windy, Ice Slip, BFS)
+│   ├── tabular_agent.hpp                # TabularAgent base class (1D Q-table, GLIE epsilon-greedy)
+│   ├── q_learning_agent.hpp             # Off-policy Q-Learning (inherits TabularAgent)
+│   ├── sarsa_agent.hpp                  # On-policy SARSA (inherits TabularAgent)
+│   ├── dp_solver.hpp                    # Exact Model-Based Value Iteration solver
+│   ├── bandits_lab.hpp                  # 10-Armed Bandits (Eps-Greedy, UCB1, Thompson Sampling)
+│   ├── taxi_lab.hpp                     # 500-State Taxi-v3 hierarchical tabular RL lab
+│   ├── cartpole.hpp                     # Native C++20 CartPole physics
+│   ├── cartpole_discretizer.hpp         # 4D Continuous-to-Discrete bin discretizer (5184 states)
+│   ├── reward_shaping.hpp               # Live runtime reward shaping config for RL Studio
+│   ├── studio_engines.hpp               # Unified RLtools SAC/PPO/TD3 & Tabular Studio backends
+│   ├── custom_env.hpp                   # RLtools ContinuousGrid2D random trap arena
+│   ├── rltools_cartpole.hpp             # RLtools CartPole-Continuous
+│   ├── rltools_mountaincar.hpp          # RLtools MountainCar-Continuous
+│   ├── rltools_drone2d.hpp              # RLtools 2D Planar Quadrotor Hover
+│   ├── rltools_lunarlander.hpp          # RLtools Moon Landing (LunarLander)
+│   ├── rltools_reacher.hpp              # RLtools 2-DOF Robotic Arm Reacher
+│   ├── rltools_ballbeam.hpp             # RLtools Ball-and-Beam Control
+│   └── rltools_double_cartpole.hpp      # RLtools Inverted Double CartPole
 ├── src/
-│   ├── gridworld.cpp               # GridWorld dynamics, Cliff layout & BFS solvability check
-│   ├── tabular_agent.cpp           # Shared TabularAgent implementation
-│   ├── q_learning_agent.cpp        # Off-policy Q-Learning update rule
-│   ├── sarsa_agent.cpp             # On-policy SARSA update rule
-│   ├── visualize_gridworld.cpp     # Parallel Q-Learning vs. SARSA Windows GUI Arena & Plots
-│   └── main.cpp                    # RLtools SAC continuous control example
+│   ├── rl_studio.cpp                    # Main Dear ImGui + ImPlot + DirectX11 RL Studio app
+│   ├── gridworld.cpp                    # GridWorld dynamics, Windy/Cliff layouts & BFS check
+│   ├── cartpole.cpp                     # CartPole Euler physics integration
+│   ├── tabular_agent.cpp                # Shared TabularAgent implementation
+│   ├── q_learning_agent.cpp             # Q-Learning Bellman update
+│   ├── sarsa_agent.cpp                  # SARSA on-policy update
+│   └── visualize_*.cpp                  # Standalone lightweight Win32 GDI visualizers & benchmarks
 ├── tests/
-│   ├── test_gridworld.cpp          # GridWorld movement, wall clamping, trap & goal tests
-│   ├── test_q_learning.cpp         # Q-Learning Bellman update & 5x5 convergence tests
-│   └── test_sarsa.cpp              # SARSA on-policy update & 5x5 convergence tests
-└── external/rl-tools/              # RLtools submodule (header-only C++ deep RL library)
+│   ├── test_gridworld.cpp               # GridWorld unit tests
+│   ├── test_q_learning.cpp              # Q-Learning unit & convergence tests
+│   ├── test_sarsa.cpp                   # SARSA on-policy unit tests
+│   ├── test_cartpole.cpp                # CartPole Euler physics unit tests
+│   └── test_cartpole_discretizer.cpp    # 4D Discretizer unit tests
+└── external/
+    ├── rl-tools/                        # RLtools header-only C++ deep RL library
+    ├── imgui/                           # Dear ImGui UI library
+    └── implot/                          # ImPlot interactive plotting library
 ```
 
 ## Build & Run
 
 ### Prerequisites
-- C++20 compiler (e.g., MinGW-W64 `g++ 13+` on Windows)
-- CMake `3.16+` (optional, for CMake/CTest builds)
+- C++20 compiler (`g++ 13+` via MinGW-W64 on Windows)
+- CMake `3.16+` & Ninja (or MinGW Makefiles)
 
-### Option 1: Using `CMake` & `CTest` (Recommended)
+### Clone with Submodules
 ```powershell
-cmake -B build -G "MinGW Makefiles"
-cmake --build build
+git clone --recursive https://github.com/douglasmmachado/RL.git
+cd RL
+```
+
+### Build & Launch RL Studio
+```powershell
+cmake -B build
+cmake --build build --target rl_studio -j 4
+.\build\rl_studio.exe
+```
+
+### Run All Unit Tests (CTest)
+```powershell
+cmake --build build -j 4
 ctest --test-dir build --output-on-failure
-.\build\visualize_gridworld.exe
 ```
-
-### Option 2: Direct `g++` Commands (Windows PowerShell)
-
-**Compile & run the Parallel Q-Learning vs. SARSA GUI Arena:**
-```powershell
-g++ -std=c++20 -Wall -Wextra -Iinclude src/visualize_gridworld.cpp src/gridworld.cpp src/tabular_agent.cpp src/q_learning_agent.cpp src/sarsa_agent.cpp -lgdi32 -luser32 -o visualize_gridworld.exe
-.\visualize_gridworld.exe
-```
-
-**Compile & run all Unit Tests:**
-```powershell
-g++ -std=c++20 -Wall -Wextra -Iinclude tests/test_gridworld.cpp src/gridworld.cpp -o test_gridworld.exe; .\test_gridworld.exe
-g++ -std=c++20 -Wall -Wextra -Iinclude tests/test_q_learning.cpp src/gridworld.cpp src/tabular_agent.cpp src/q_learning_agent.cpp -o test_q_learning.exe; .\test_q_learning.exe
-g++ -std=c++20 -Wall -Wextra -Iinclude tests/test_sarsa.cpp src/gridworld.cpp src/tabular_agent.cpp src/sarsa_agent.cpp -o test_sarsa.exe; .\test_sarsa.exe
-```
-
-**Compile & run the `RLtools` SAC Continuous Control Example:**
-```powershell
-g++ -std=c++17 -O3 -Iinclude -Iexternal/rl-tools/include src/main.cpp -o rl_main.exe; .\rl_main.exe
-```
-
-## GUI Arena Controls (`visualize_gridworld.exe`)
-
-| Key | Action |
-| :--- | :--- |
-| **`L`** | Toggle **Live Parallel Training** (watch Q-Learning & SARSA explore and learn step-by-step) |
-| **`T`** | Fast-train both agents **+100 episodes** and update the 3 live comparison plots |
-| **`Space`** | Run a **Greedy Policy Race** (both trained agents navigate side-by-side without exploration) |
-| **`K`** | Load the classic **8x4 Cliff-Walking** trap map (highlights Q-Learning vs. SARSA differences) |
-| **`M`** | Generate a **New Random Map** (random dimensions, walls, and traps, verified solvable via BFS) |
-| **`C`** | Clear both Q-tables and reset all plots |
-| **`R`** | Reset the current episode (keeps learned Q-tables) |
-| **`Esc`** | Close the window |
-
-## Roadmap
-- [x] Stage 1: Generic C++20 `Environment` template & 2D `GridWorld` with unit tests
-- [x] Stage 2: Tabular `QLearningAgent` with 1D flattened Q-table & live heatmap visualizer
-- [x] Stage 3: On-policy `SarsaAgent`, `TabularAgent` inheritance refactor & Parallel GUI Arena
-- [ ] Stage 4: Continuous control environments (`CartPole` / 2D Continuous Navigation) & neural network function approximation

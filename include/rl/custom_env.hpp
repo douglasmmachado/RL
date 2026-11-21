@@ -9,6 +9,7 @@
 #include <rl_tools/operations/cpu.h>
 #include <rl_tools/rl/environments/environments.h>
 #include <rl_tools/rl/environments/operations_generic.h>
+#include "rl/reward_shaping.hpp"
 #include <array>
 
 namespace rl_tools::rl::environments::continuous_grid_2d {
@@ -185,10 +186,14 @@ namespace rl_tools {
         T dy_g = next_state.y - static_cast<T>(m.target_y);
         T dist_goal = math::sqrt(device.math, dx_g * dx_g + dy_g * dy_g);
 
+        const auto& rs = studio::reward_shaping();
         T ux = get(action, 0, 0);
         T uy = get(action, 0, 1);
 
-        T r = -dist_goal * (T)0.5 - (T)0.01 * (ux * ux + uy * uy);
+        T r = -static_cast<T>(rs.cgrid_effort_weight) * (ux * ux + uy * uy);
+        if (rs.cgrid_dense_shaping) {
+            r -= dist_goal * (T)0.5;
+        }
         if (dist_goal <= static_cast<T>(m.goal_radius)) {
             return r + (T)10.0;
         }

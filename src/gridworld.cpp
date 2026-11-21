@@ -18,6 +18,7 @@ GridWorld::GridWorld(int width, int height)
       goal_y_(height - 1),
       trap_x_(width / 2),
       trap_y_(height / 2),
+      wind_(width, 0),
       cells_(width * height, CellType::Empty) {
     cells_[to_state_id(trap_x_, trap_y_)] = CellType::Trap;
     cells_[to_state_id(goal_x_, goal_y_)] = CellType::Goal;
@@ -64,6 +65,7 @@ void GridWorld::randomize_layout(int width, int height, double trap_prob, double
     trap_x_ = width_ / 2;
     trap_y_ = height_ / 2;
     max_steps_ = width_ * height_ * 4;
+    wind_.assign(width_, 0);
 
     std::mt19937 rng(seed);
     std::uniform_real_distribution<double> dist(0.0, 1.0);
@@ -104,6 +106,7 @@ void GridWorld::set_cliff_layout() {
     trap_x_ = 1;
     trap_y_ = 0;
     max_steps_ = 100;
+    wind_.assign(width_, 0);
 
     cells_.assign(width_ * height_, CellType::Empty);
     // Start is at (0, 0) (top-left), Goal is at (7, 0) (top-right).
@@ -116,6 +119,31 @@ void GridWorld::set_cliff_layout() {
     reset();
 }
 
+void GridWorld::set_windy_layout() {
+    width_ = 10;
+    height_ = 7;
+    goal_x_ = 7;
+    goal_y_ = 3;
+    trap_x_ = 5;
+    trap_y_ = 0;
+    max_steps_ = 150;
+    // Classic Sutton & Barto upward wind per column!
+    wind_ = {0, 0, 0, 1, 1, 1, 2, 2, 1, 0};
+
+    cells_.assign(width_ * height_, CellType::Empty);
+    cells_[to_state_id(goal_x_, goal_y_)] = CellType::Goal;
+    // Add 2 fire hazards on the top row where wind blows carelessly high agents!
+    cells_[to_state_id(4, 0)] = CellType::Trap;
+    cells_[to_state_id(6, 0)] = CellType::Trap;
+    reset();
+}
+
+void GridWorld::set_cell(int x, int y, CellType type) {
+    if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
+    if ((x == 0 && y == 0) || (x == goal_x_ && y == goal_y_)) return; // Protect Start and Goal
+    cells_[to_state_id(x, y)] = type;
+}
+
 int GridWorld::reset() {
     agent_x_ = 0;
     agent_y_ = 0;
@@ -126,22 +154,36 @@ int GridWorld::reset() {
 StepResult<int> GridWorld::step(const GridAction& action) {
     current_steps_++;
 
+    // Optional FrozenLake stochastic slip (perpendicular deflection with probability slip_prob_)
+    GridAction effective_action = action;
+    if (slip_prob_ > 0.0) {
+        std::uniform_real_distribution<double> u(0.0, 1.0);
+        double r = u(rng_);
+        if (r < slip_prob_ * 0.5) {
+            effective_action = static_cast<GridAction>((static_cast<int>(action) + 1) % 4);
+        } else if (r < slip_prob_) {
+            effective_action = static_cast<GridAction>((static_cast<int>(action) + 3) % 4);
+        }
+    }
+
+    // Apply upward wind from the CURRENT column before/with the move
+    int w_push = wind_at(agent_x_);
     int next_x = agent_x_;
-    int next_y = agent_y_;
+    int next_y = std::clamp(agent_y_ - w_push, 0, height_ - 1);
 
     // 2. Compute candidate position clamped to outer walls
-    switch (action) {
+    switch (effective_action) {
         case GridAction::Up:
-            next_y = std::clamp(agent_y_ - 1, 0, height_ - 1);
+            next_y = std::clamp(next_y - 1, 0, height_ - 1);
             break;
         case GridAction::Down:
-            next_y = std::clamp(agent_y_ + 1, 0, height_ - 1);
+            next_y = std::clamp(next_y + 1, 0, height_ - 1);
             break;
         case GridAction::Left:
-            next_x = std::clamp(agent_x_ - 1, 0, width_ - 1);
+            next_x = std::clamp(next_x - 1, 0, width_ - 1);
             break;
         case GridAction::Right:
-            next_x = std::clamp(agent_x_ + 1, 0, width_ - 1);
+            next_x = std::clamp(next_x + 1, 0, width_ - 1);
             break;
     }
 

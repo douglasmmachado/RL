@@ -72,6 +72,47 @@ if(WIN32)
     target_link_libraries(visualize_cartpole_rltools PRIVATE gdi32 user32)
 endif()
 
+# 5. Unified C++ RLtools Gym Suite (5 Environments x 3 Algorithms: SAC / PPO / TD3)
+add_executable(visualize_gym_suite
+    src/visualize_gym_suite.cpp
+)
+target_include_directories(visualize_gym_suite PRIVATE
+    include
+    external/rl-tools/include
+)
+if(WIN32)
+    target_link_libraries(visualize_gym_suite PRIVATE gdi32 user32)
+endif()
+
+# 6. Complete Interactive C++ RL Studio (Dear ImGui + ImPlot + DirectX11 + RLtools)
+add_library(imgui_implot STATIC
+    external/imgui/imgui.cpp
+    external/imgui/imgui_draw.cpp
+    external/imgui/imgui_tables.cpp
+    external/imgui/imgui_widgets.cpp
+    external/imgui/backends/imgui_impl_win32.cpp
+    external/imgui/backends/imgui_impl_dx11.cpp
+    external/implot/implot.cpp
+    external/implot/implot_items.cpp
+)
+target_include_directories(imgui_implot PUBLIC
+    external/imgui
+    external/imgui/backends
+    external/implot
+)
+
+add_executable(rl_studio
+    src/rl_studio.cpp
+)
+target_include_directories(rl_studio PRIVATE
+    include
+    external/rl-tools/include
+)
+target_link_libraries(rl_studio PRIVATE rl_core imgui_implot)
+if(WIN32)
+    target_link_libraries(rl_studio PRIVATE d3d11 d3dcompiler dxgi dwmapi gdi32 user32)
+endif()
+
 # 3. Unit Testing with CTest
 enable_testing()
 

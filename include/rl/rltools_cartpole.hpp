@@ -14,6 +14,7 @@
 #include <rl_tools/operations/cpu.h>
 #include <rl_tools/rl/environments/environments.h>
 #include <rl_tools/rl/environments/operations_generic.h>
+#include "rl/reward_shaping.hpp"
 
 namespace rl_tools::rl::environments::cartpole_continuous {
 
@@ -172,16 +173,23 @@ namespace rl_tools {
     }
 
     /**
-     * @brief Returns +1.0 for every step survived (classic CartPole reward).
+     * @brief Returns +1.0 for every step survived minus optional live reward shaping penalties
+     *        (centering, angle, and control effort) configured in RL Studio!
      */
     template <typename DEVICE, typename SPEC, typename ACTION_SPEC, typename RNG>
-    static typename SPEC::T reward(DEVICE&, const rl::environments::CartPoleContinuous<SPEC>&,
+    static typename SPEC::T reward(DEVICE& device, const rl::environments::CartPoleContinuous<SPEC>&,
                                    typename rl::environments::CartPoleContinuous<SPEC>::Parameters&,
                                    const typename rl::environments::CartPoleContinuous<SPEC>::State&,
-                                   const Matrix<ACTION_SPEC>&,
-                                   const typename rl::environments::CartPoleContinuous<SPEC>::State&, RNG&) {
+                                   const Matrix<ACTION_SPEC>& action,
+                                   const typename rl::environments::CartPoleContinuous<SPEC>::State& next_state, RNG&) {
         using T = typename SPEC::T;
-        return (T)1.0;
+        const auto& rs = studio::reward_shaping();
+        T u = get(action, 0, 0);
+        T r = (T)1.0;
+        r -= static_cast<T>(rs.cartpole_center_penalty) * math::abs(device.math, next_state.x);
+        r -= static_cast<T>(rs.cartpole_angle_penalty) * math::abs(device.math, next_state.theta);
+        r -= static_cast<T>(rs.cartpole_effort_penalty) * (u * u);
+        return r;
     }
 
     /**

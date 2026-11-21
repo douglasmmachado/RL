@@ -6,7 +6,9 @@
 #pragma once
 
 #include "rl/environment.hpp"
+#include <algorithm>
 #include <iostream>
+#include <random>
 #include <vector>
 
 namespace rl {
@@ -62,6 +64,34 @@ public:
      *        off-policy Q-Learning (optimal risky cliff-edge path) vs. on-policy SARSA (safe upper path)!
      */
     void set_cliff_layout();
+
+    /**
+     * @brief Loads the classic Sutton & Barto "Windy GridWorld" (10x7) where vertical upward wind
+     *        blows the robot off-course in middle columns!
+     */
+    void set_windy_layout();
+
+    /**
+     * @brief Sets the CellType of a specific tile (used by RL Studio's click-to-paint Map Editor!).
+     * @param x Column index.
+     * @param y Row index.
+     * @param type New CellType (Empty, Wall, or Trap; Goal/Start are protected).
+     */
+    void set_cell(int x, int y, CellType type);
+
+    /**
+     * @brief Sets the stochastic slip probability (0.0 = deterministic, 0.2 = FrozenLake slippery ice!).
+     * @param prob Probability in [0.0, 0.5] of slipping perpendicular to the intended move.
+     */
+    void set_slip_prob(double prob) noexcept { slip_prob_ = std::clamp(prob, 0.0, 0.5); }
+
+    /// @brief Returns the current stochastic slip probability.
+    [[nodiscard]] double slip_prob() const noexcept { return slip_prob_; }
+
+    /// @brief Returns the upward wind strength (cells pushed up) for column `x`.
+    [[nodiscard]] int wind_at(int x) const noexcept {
+        return (x >= 0 && x < static_cast<int>(wind_.size())) ? wind_[x] : 0;
+    }
 
     /**
      * @brief Resets the agent to the top-left corner (0, 0) and zeroes the step counter.
@@ -147,6 +177,9 @@ private:
     int trap_y_;                    ///< Vertical coordinate of the default Trap cell.
     int current_steps_{0};          ///< Steps taken in the current episode.
     int max_steps_{100};            ///< Maximum steps before episode truncation.
+    double slip_prob_{0.0};         ///< Stochastic FrozenLake slip probability in [0, 0.5].
+    std::vector<int> wind_;         ///< Upward wind strength per column (0 = no wind).
+    std::mt19937 rng_{12345};       ///< RNG for stochastic slip transitions.
     std::vector<CellType> cells_;   ///< Flattened 2D map of CellTypes (size = width_ * height_).
 
     /**
