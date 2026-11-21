@@ -21,14 +21,25 @@ add_library(rl_core STATIC
 )
 target_include_directories(rl_core PUBLIC include)
 
-# 1. RLtools Continuous Control SAC Example (Custom GridWorld1D)
-add_executable(rl_main
-    src/main.cpp
+# 1. RLtools Continuous Control Benchmark & GUI Arena: Off-Policy SAC vs. On-Policy PPO
+add_executable(compare_sac_ppo
+    src/compare_sac_ppo.cpp
 )
-target_include_directories(rl_main PRIVATE
+target_include_directories(compare_sac_ppo PRIVATE
     include
     external/rl-tools/include
 )
+
+add_executable(visualize_sac_ppo
+    src/visualize_sac_ppo.cpp
+)
+target_include_directories(visualize_sac_ppo PRIVATE
+    include
+    external/rl-tools/include
+)
+if(WIN32)
+    target_link_libraries(visualize_sac_ppo PRIVATE gdi32 user32)
+endif()
 
 # 2. Parallel Q-Learning vs. SARSA GUI Arena (Windows GDI)
 add_executable(visualize_gridworld
